@@ -15,40 +15,23 @@ const getUsers = async (req, res, next) => {
   }
 };
 
-// const getUserByID = async (req, res, next) => {
-//   try {
-//     const user = await User.findById(req.params.userId);
-//     if (!user) {
-//       next(new NotFoundDataError('Пользователь не найден'));
-//       return;
-//     }
-//     res.status(200).send(user);
-//   } catch (err) {
-//     if (err.name === 'CastError') {
-//       next(new BadRequestError('Переданы некорректные данные id'));
-//       return;
-//     }
-//     next(err);
-//   }
-// };
-
-// const currentUser = async (req, res, next) => {
-//   console.log(req.userId);
-//   try {
-//     const user = await User.findById(req.userId);
-//     if (!user) {
-//       next(new NotFoundDataError('Пользователь не найден'));
-//       return;
-//     }
-//     res.status(200).send(user);
-//   } catch (err) {
-//     if (err.name === 'CastError') {
-//       next(new BadRequestError('Переданы некорректные данные id'));
-//       return;
-//     }
-//     next(err);
-//   }
-// };
+const updateUser = async (req, res, next) => {
+  try {
+    const { name, email } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, email },
+      { new: true, runValidators: true },
+    );
+    res.status(200).send(user);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestError('Переданы некорректные данные пользователя'));
+      return;
+    }
+    next(err);
+  }
+};
 
 // регистрация
 const createUser = async (req, res, next) => {
@@ -107,49 +90,9 @@ const login = async (req, res, next) => {
   }
 };
 
-const updateUser = async (req, res, next) => {
-  console.log(req.user._id);
-  try {
-    const { name, email } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, email },
-      { new: true, runValidators: true },
-    );
-    res.status(200).send(user);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      next(new BadRequestError('Переданы некорректные данные пользователя'));
-      return;
-    }
-    next(err);
-  }
-};
-
-// const updateAvatar = async (req, res, next) => {
-//   const { avatar } = req.body;
-//   try {
-//     const user = await User.findByIdAndUpdate(
-//       req.userId,
-//       { avatar },
-//       { new: true, runValidators: true },
-//     );
-//     res.status(200).send(user);
-//   } catch (err) {
-//     if (err.name === 'ValidationError') {
-//       next(new BadRequestError('Переданы некорректные данные аватара'));
-//       return;
-//     }
-//     next(err);
-//   }
-// };
-
 module.exports = {
   getUsers,
-  // getUserByID,
   createUser,
   login,
-  // currentUser,
   updateUser,
-  // updateAvatar,
 };

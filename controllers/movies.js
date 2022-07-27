@@ -1,7 +1,7 @@
-const Movie = require('../models/movie');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundDataError = require('../errors/NotFoundDataError');
 const DeleteDataError = require('../errors/DeleteDataError');
+const Movie = require('../models/movie');
 
 const getMovie = async (req, res, next) => {
   try {
@@ -14,7 +14,7 @@ const getMovie = async (req, res, next) => {
 
 const createMovie = async (req, res, next) => {
   try {
-    const owner = req.userId;
+    const owner = req.user._id;
     const {
       country,
       director,
@@ -43,7 +43,7 @@ const createMovie = async (req, res, next) => {
       owner,
     });
     await movie.save();
-    // await movie.populate('owner');
+    await movie.populate('owner');
     res.status(201).send(await movie.save());
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -57,13 +57,13 @@ const createMovie = async (req, res, next) => {
 const deleteMovie = async (req, res, next) => {
   const { movieId } = req.params;
   try {
-    const movieById = await Movie.findById(movieId);
+    const movieById = await Movie.findOne(movieId);
     if (!movieById) {
       next(new NotFoundDataError('Нет фильма с этим id'));
       return;
     }
     const movieOwner = movieById.owner.toString();
-    if (movieOwner !== req.userId) {
+    if (movieOwner !== req.user._id) {
       next(new DeleteDataError('Нет прав для удаления чужого фильма'));
       return;
     }
@@ -78,52 +78,8 @@ const deleteMovie = async (req, res, next) => {
   }
 };
 
-// const likeMovie = async (req, res, next) => {
-//   try {
-//     const like = await Movie.findByIdAndUpdate(
-//       req.params.movieId,
-//       { $addToSet: { likes: req.userId } },
-//       { new: true },
-//     ).populate(['owner', 'likes']);
-//     if (!like) {
-//       next(new NotFoundDataError('Нет фильма с этим id'));
-//       return;
-//     }
-//     res.status(200).send(like);
-//   } catch (err) {
-//     if (err.name === 'CastError') {
-//       next(new BadRequestError('Неверный id у фильма'));
-//       return;
-//     }
-//     next(err);
-//   }
-// };
-
-// const dislikeMovie = async (req, res, next) => {
-//   try {
-//     const like = await Movie.findByIdAndUpdate(
-//       req.params.movieId,
-//       { $pull: { likes: req.userId } },
-//       { new: true },
-//     ).populate(['owner', 'likes']);
-//     if (!like) {
-//       next(new NotFoundDataError('Нет фильма с этим id'));
-//       return;
-//     }
-//     res.status(200).send(like);
-//   } catch (err) {
-//     if (err.name === 'CastError') {
-//       next(new BadRequestError('Неверный id у фильма'));
-//       return;
-//     }
-//     next(err);
-//   }
-// };
-
 module.exports = {
   getMovie,
   createMovie,
   deleteMovie,
-  // likeMovie,
-  // dislikeMovie,
 };

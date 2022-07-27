@@ -1,11 +1,14 @@
 // const helmet = require('helmet');
+// const morgan = require('morgan');
 const cors = require('cors');
 const cookieParser = require('cookie-parser'); // модуль для чтения куки
-const { errors, celebrate, Joi } = require('celebrate');
+const { errors } = require('celebrate');
 const express = require('express');
 const mongoose = require('mongoose');
-const isAuth = require('./middlewares/auth');
+// const isAuth = require('./middlewares/auth');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
+
+const { validateSignin, validateSignup } = require('./validator/validator');
 
 require('dotenv').config();
 
@@ -16,7 +19,7 @@ const { movies } = require('./routes/movies');
 const NotFoundDataError = require('./errors/NotFoundDataError');
 
 const app = express();
-
+// app.use(morgan('dev'));
 const accessCors = [
   'https://renat.domains.nomoredomains.sbs',
   'http://renat.domains.nomoredomains.sbs',
@@ -50,38 +53,9 @@ async function main() {
 
   app.use(requestLogger);
 
-  // app.get('/crash-test', () => {
-  //   setTimeout(() => {
-  //     throw new Error('Сервер сейчас упадёт');
-  //   }, 0);
-  // });
-
-  app.post(
-    '/signin',
-    celebrate({
-      body: Joi.object().keys({
-        email: Joi.string().required().email(),
-        password: Joi.string().required(),
-      }),
-    }),
-    login,
-  );
-
-  app.post(
-    '/signup',
-    celebrate({
-      body: Joi.object().keys({
-        email: Joi.string().required().email(),
-        password: Joi.string().required(),
-        name: Joi.string().min(2).max(30),
-        about: Joi.string().min(2).max(30),
-        avatar: Joi.string().regex(/(http|https):\/\/(www)?\.?([A-Za-z0-9.-]+)\.([A-z]{2,})((?:\/[+~%/.\w-_]*)?\??(?:[-=&;%@.\w_]*)#?(?:[\w]*))?/),
-      }),
-    }),
-    createUser,
-  );
-
-  app.get('/signout', (req, res) => {
+  app.post('/signin', validateSignin, login);
+  app.post('/signup', validateSignup, createUser);
+  app.post('/signout', (req, res) => {
     res
       .status(200)
       .clearCookie('jwt', {
