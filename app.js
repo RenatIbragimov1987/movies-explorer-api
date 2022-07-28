@@ -21,8 +21,8 @@ const NotFoundDataError = require('./errors/NotFoundDataError');
 const app = express();
 // app.use(morgan('dev'));
 const accessCors = [
-  'https://renat.domains.nomoredomains.sbs',
-  'http://renat.domains.nomoredomains.sbs',
+  // 'https://renat.domains.nomoredomains.sbs',
+  // 'http://renat.domains.nomoredomains.sbs',
   'http://localhost:3000',
   'https://localhost:3000',
 ];
@@ -66,12 +66,12 @@ async function main() {
       .send({ message: 'Выход' });
   });
 
-  app.use((req, res, next) => {
-    req.user = {
-      _id: '62d993ffd5a4530c22d19d28',
-    };
-    next();
-  });
+  // app.use((req, res, next) => {
+  //   req.user = {
+  //     _id: '62d993ffd5a4530c22d19d28',
+  //   };
+  //   next();
+  // });
   // app.use(isAuth);
   app.use('/', users);
   app.use('/', movies);
