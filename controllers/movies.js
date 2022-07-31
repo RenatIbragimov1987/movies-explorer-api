@@ -14,7 +14,6 @@ const getMovie = async (req, res, next) => {
 
 const createMovie = async (req, res, next) => {
   try {
-    const owner = req.user._id;
     const {
       country,
       director,
@@ -22,7 +21,7 @@ const createMovie = async (req, res, next) => {
       year,
       description,
       image,
-      trailer,
+      trailerLink,
       thumbnail,
       movieId,
       nameRU,
@@ -35,16 +34,16 @@ const createMovie = async (req, res, next) => {
       year,
       description,
       image,
-      trailer,
+      trailerLink,
       thumbnail,
       movieId,
       nameRU,
       nameEN,
-      owner,
+      owner: req.user.id,
     });
     await movie.save();
     await movie.populate('owner');
-    res.status(201).send(await movie.save());
+    res.status(201).send(movie);
   } catch (err) {
     if (err.name === 'ValidationError') {
       next(new BadRequestError('Произошла ошибка. Поля должны быть заполнены'));
@@ -55,15 +54,14 @@ const createMovie = async (req, res, next) => {
 };
 
 const deleteMovie = async (req, res, next) => {
-  const { movieId } = req.params;
+  const { _id } = req.params;
   try {
-    const movieById = await Movie.findOne(movieId);
+    const movieById = await Movie.findById(_id);
     if (!movieById) {
       next(new NotFoundDataError('Нет фильма с этим id'));
       return;
     }
-    const movieOwner = movieById.owner.toString();
-    if (movieOwner !== req.user._id) {
+    if (!movieById.owner.equals(req.user.id._id)) {
       next(new DeleteDataError('Нет прав для удаления чужого фильма'));
       return;
     }

@@ -5,8 +5,10 @@ const ConflictDataError = require('../errors/ConflictDataError');
 // const NotFoundDataError = require('../errors/NotFoundDataError');
 const { getToken } = require('../utils/jwt');
 const { DUBLICATE_MONGOOSE_ERROR_CODE, SALT_ROUNDS } = require('../constants/const');
+require('dotenv').config();
 
 const getUsers = async (req, res, next) => {
+  console.log(process.env.PORT);
   try {
     const users = await User.find({});
     res.status(200).send(users);
@@ -14,25 +16,6 @@ const getUsers = async (req, res, next) => {
     next(err);
   }
 };
-
-const updateUser = async (req, res, next) => {
-  try {
-    const { name, email } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, email },
-      { new: true, runValidators: true },
-    );
-    res.status(200).send(user);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      next(new BadRequestError('Переданы некорректные данные пользователя'));
-      return;
-    }
-    next(err);
-  }
-};
-
 // регистрация
 const createUser = async (req, res, next) => {
   const {
@@ -40,10 +23,6 @@ const createUser = async (req, res, next) => {
     email,
     password,
   } = req.body;
-  if (!email || !password) {
-    next(new BadRequestError('Переданы некорректные данные логина или пароля'));
-    return;
-  }
   try {
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
     const user = new User({
@@ -71,21 +50,35 @@ const createUser = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) {
-      next(new BadRequestError('Переданы некорректные данные логина или пароля'));
-      return;
-    }
     const user = await User.findUserByCredentials(email, password);
-    const token = await getToken(user._id);
+    const token = await getToken(user);
     res.cookie('jwt', token, {
       maxAge: 3600000 * 24 * 7,
       httpOnly: true,
-      sameSite: 'None',
+      sameSite: 'none',
       secure: true,
     });
-    res.status(200).send({ token });
+    res.status(200).send({ token }); //  возвращаем токен в котором вся инфа о юзере включая его _id
     return;
   } catch (err) {
+    next(err);
+  }
+};
+
+const updateUser = async (req, res, next) => {
+  try {
+    const { name, email } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { name, email },
+      { new: true, runValidators: true },
+    );
+    res.status(200).send(user);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new ConflictDataError('Переданы некорректные данные пользователя'));
+      return;
+    }
     next(err);
   }
 };
