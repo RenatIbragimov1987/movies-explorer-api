@@ -4,11 +4,11 @@ const { validateUserUpdate } = require('../validator/validator');
 
 const users = express.Router();
 const {
-  getUsers,
+  getUser,
   updateUser,
 } = require('../controllers/users');
 
-users.get('/users/me', getUsers);
+users.get('/users/me', getUser);
 users.patch('/users/me', validateUserUpdate, updateUser);
 
 module.exports = {

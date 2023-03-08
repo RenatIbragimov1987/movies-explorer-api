@@ -1,16 +1,25 @@
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundDataError = require('../errors/NotFoundDataError');
-const DeleteDataError = require('../errors/DeleteDataError');
+// const DeleteDataError = require('../errors/DeleteDataError');
 const Movie = require('../models/movie');
 
 const getMovie = async (req, res, next) => {
   try {
-    const movies = await Movie.find({}).exec();
+    const movies = await Movie.find({ owner: req.user.id }).exec();
     res.status(200).send(movies);
   } catch (err) {
     next(err);
   }
 };
+
+// const getMovie = async (req, res, next) => {
+//   const { _id } = req.user;
+//   Movie.find({ owner: _id })
+//     .then((movies) => {
+//       res.send(movies);
+//     })
+//     .catch((err) => next(err));
+// };
 
 const createMovie = async (req, res, next) => {
   try {
@@ -61,10 +70,10 @@ const deleteMovie = async (req, res, next) => {
       next(new NotFoundDataError('Нет фильма с этим id'));
       return;
     }
-    if (!movieById.owner.equals(req.user.id._id)) {
-      next(new DeleteDataError('Нет прав для удаления чужого фильма'));
-      return;
-    }
+    // if (!movieById.owner.equals(req.user._id)) {
+    //   next(new DeleteDataError('Нет прав для удаления'));
+    //   return;
+    // }
     const movieDelete = await Movie.findByIdAndDelete(movieById);
     res.status(200).send(movieDelete);
   } catch (err) {

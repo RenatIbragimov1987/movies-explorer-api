@@ -2,16 +2,19 @@ const bcrypt = require('bcrypt');
 const User = require('../models/user');
 const BadRequestError = require('../errors/BadRequestError');
 const ConflictDataError = require('../errors/ConflictDataError');
-// const NotFoundDataError = require('../errors/NotFoundDataError');
+const NotFoundDataError = require('../errors/NotFoundDataError');
 const { getToken } = require('../utils/jwt');
 const { DUBLICATE_MONGOOSE_ERROR_CODE, SALT_ROUNDS } = require('../constants/const');
 require('dotenv').config();
 
-const getUsers = async (req, res, next) => {
-  console.log(process.env.PORT);
+const getUser = async (req, res, next) => {
   try {
-    const users = await User.find({});
-    res.status(200).send(users);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      next(new NotFoundDataError('Пользователь с таким id отсутствует'));
+      return;
+    }
+    res.status(200).send(user);
   } catch (err) {
     next(err);
   }
@@ -65,6 +68,22 @@ const login = async (req, res, next) => {
   }
 };
 
+//  выход
+const exitUser = async (req, res, next) => {
+  try {
+    res.clearCookie('jwt', {
+      maxAge: -1,
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+    });
+    res.status(200).send({ message: 'Выход' }); //  выход
+    return;
+  } catch (err) {
+    next(err);
+  }
+};
+
 const updateUser = async (req, res, next) => {
   try {
     const { name, email } = req.body;
@@ -84,8 +103,9 @@ const updateUser = async (req, res, next) => {
 };
 
 module.exports = {
-  getUsers,
+  getUser,
   createUser,
   login,
   updateUser,
+  exitUser,
 };
